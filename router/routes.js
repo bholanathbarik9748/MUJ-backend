@@ -99,8 +99,15 @@ router.post("/user/login", async (req, res) => {
 });
 
 router.post("/add/ride", async (req, res) => {
-  console.log(req.body);
   const { PublisherID, from, to, no_of_pass, doj, price } = req.body;
+
+  if (!PublisherID || !from || !to || !no_of_pass || !doj || !price) {
+    return res.status(300).json({
+      status: false,
+      message: "Bad Request: All fields are required.",
+    })
+  }
+
   try {
     const ride = new Ride({
       PublisherID,
@@ -111,16 +118,24 @@ router.post("/add/ride", async (req, res) => {
       price,
     });
     await ride.save();
-    console.log(ride);
-    res.send("RIDE PUBLISHED successfully");
+    return res.status(200).json({
+      status: true,
+      message: "Ride added successfully"
+    });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error"
+    });
   }
 });
+
+
 router.get("/rides/all", async (req, res) => {
   try {
     const allRides = await Ride.find();
-    res.status(200).json(allRides);
+    res.status(200).json({ data: allRides });
   } catch (e) {
     console.log(e);
   }
@@ -128,7 +143,6 @@ router.get("/rides/all", async (req, res) => {
 
 router.get("/ridesto/:TO", async (req, res) => {
   const to = req.params.TO.toUpperCase();
-  console.log("GETTING RIDES TO " + to);
   try {
     const availableRides = await Ride.find({ to });
     console.log(availableRides);
@@ -138,6 +152,7 @@ router.get("/ridesto/:TO", async (req, res) => {
     console.log(err);
   }
 });
+
 //fix this ->
 router.get("/rides/:FROM/:TO", async (req, res) => {
   const to = req.params.TO.toUpperCase();
