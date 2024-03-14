@@ -426,51 +426,58 @@ router.delete("/ride/request/remove/:RideID/:RequestID", async (req, res) => {
   }
 });
 
-router.get("/ride/request/show/:RideID/", async (req, res) => {
-  const RideID = req.params.RideID;
-
-  console.log(RideID);
+router.get("/ride/request/show/:rideID", async (req, res) => {
   try {
-    const data = await RideRequest.find({ RideID });
-    console.log(data);
-    res.status(200).send(data);
+    const rideID = req.params.rideID;
+    const rideRequests = await RideRequest.find({ RideID: rideID });
+
+    if (!rideRequests) {
+      return res.status(404).json({ message: "No ride requests found for the given RideID" });
+    }
+
+    res.status(200).json({ rideRequests });
   } catch (err) {
-    console.log();
+    console.error("Error retrieving ride requests:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
-router.post(
-  "/ride/request/add/:RideID/:RequestID/:RequestName",
-  async (req, res) => {
-    const RideID = req.params.RideID;
-    const RequestID = req.params.RequestID;
-    const RequestName = req.params.RequestName;
+module.exports = router;
 
-    console.log(RideID);
-    console.log(RequestID);
-    console.log(RequestName);
-    try {
-      const test_duplicate = await RideRequest.findOne({
-        $and: [{ RideID }, { RequestID }],
-      });
-      if (test_duplicate) {
-        console.log("_____________________________________");
-        console.log(test_duplicate);
-        console.log("_____________________________________");
-        res.status(400).json({ message: "ALREADY REQUESTED" });
-      } else {
-        const new_request = new RideRequest({
-          RideID,
-          RequestID,
-          RequestName,
-        });
-        await new_request.save();
-        res.status(200).json({ message: "RIDE REQUESTED" });
-      }
-    } catch (err) {
-      console.log(err);
+router.post("/ride/request/add/:rideID/:requestID/:requestName", async (req, res) => {
+  try {
+    const rideID = req.params.rideID;
+    const requestID = req.params.requestID;
+    const requestName = req.params.requestName;
+
+    // Validate input parameters if necessary
+
+    console.log(rideID);
+    console.log(requestID);
+    console.log(requestName);
+
+    // Check for duplicate ride request
+    const existingRequest = await RideRequest.findOne({ RideID: rideID, RequestID: requestID });
+    if (existingRequest) {
+      console.log("_____________________________________");
+      console.log(existingRequest);
+      console.log("_____________________________________");
+      return res.status(400).json({ message: "ALREADY REQUESTED" });
     }
+
+    // Create new ride request
+    const newRequest = new RideRequest({
+      RideID: rideID,
+      RequestID: requestID,
+      RequestName: requestName,
+    });
+    await newRequest.save();
+
+    res.status(200).json({ message: "RIDE REQUESTED" });
+  } catch (err) {
+    console.error("Error adding ride request:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
-);
+});
 
 export default router;
