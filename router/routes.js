@@ -442,8 +442,6 @@ router.get("/ride/request/show/:rideID", async (req, res) => {
   }
 });
 
-module.exports = router;
-
 router.post("/ride/request/add/:rideID/:requestID/:requestName", async (req, res) => {
   try {
     const rideID = req.params.rideID;
